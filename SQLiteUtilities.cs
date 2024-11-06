@@ -3,14 +3,7 @@ using System.Data.SQLite;
 
 namespace SixtyLibrary
 {
-    // Define result codes for easier interpretation
-    public enum SQLiteResultCode
-    {
-        Success,
-        Error
-    }
-
-    //Local DataBase file handling
+    //Local Database file handling
     public static class SQLiteUtilities
     {
         // Stores the SQLite connection string
@@ -23,7 +16,7 @@ namespace SixtyLibrary
         }
 
         // Executes a non-query (INSERT, UPDATE, DELETE) and returns a result code
-        public static (SQLiteResultCode Result, int RowsAffected, string? ErrorMessage) ExecuteNonQuery(string sql)
+        public static (bool Result, int RowsAffected, string? ErrorMessage) ExecuteNonQuery(string sql)
         {
             try
             {
@@ -33,18 +26,18 @@ namespace SixtyLibrary
                     using (var command = new SQLiteCommand(sql, connection))
                     {
                         int rowsAffected = command.ExecuteNonQuery();
-                        return (SQLiteResultCode.Success, rowsAffected, null);
+                        return (true, rowsAffected, null);
                     }
                 }
             }
             catch (Exception ex)
             {
-                return (SQLiteResultCode.Error, 0, ex.Message);
+                return (false, 0, ex.Message);
             }
         }
 
         // Executes a query and returns the result as a DataTable along with a result code
-        public static (SQLiteResultCode Result, DataTable? Data, string? ErrorMessage) ExecuteQuery(string sql)
+        public static (bool Result, DataTable? Data, string? ErrorMessage) ExecuteQuery(string sql)
         {
             var dataTable = new DataTable();
             try
@@ -56,18 +49,18 @@ namespace SixtyLibrary
                     using (var adapter = new SQLiteDataAdapter(command))
                     {
                         adapter.Fill(dataTable);
-                        return (SQLiteResultCode.Success, dataTable, null);
+                        return (true, dataTable, null);
                     }
                 }
             }
             catch (Exception ex)
             {
-                return (SQLiteResultCode.Error, null, ex.Message);
+                return (false, null, ex.Message);
             }
         }
 
         // Executes a scalar query and returns a single value with a result code
-        public static (SQLiteResultCode Result, object? Value, string? ErrorMessage) ExecuteScalar(string sql)
+        public static (bool Result, object? Value, string? ErrorMessage) ExecuteScalar(string sql)
         {
             try
             {
@@ -77,18 +70,18 @@ namespace SixtyLibrary
                     using (var command = new SQLiteCommand(sql, connection))
                     {
                         object value = command.ExecuteScalar();
-                        return (SQLiteResultCode.Success, value, null);
+                        return (true, value, null);
                     }
                 }
             }
             catch (Exception ex)
             {
-                return (SQLiteResultCode.Error, null, ex.Message);
+                return (false, null, ex.Message);
             }
         }
 
         // Executes multiple commands within a transaction, returning a result code
-        public static (SQLiteResultCode Result, string? ErrorMessage) ExecuteTransaction(Action<SQLiteConnection, SQLiteTransaction> action)
+        public static (bool Result, string? ErrorMessage) ExecuteTransaction(Action<SQLiteConnection, SQLiteTransaction> action)
         {
             try
             {
@@ -101,19 +94,19 @@ namespace SixtyLibrary
                         {
                             action(connection, transaction);
                             transaction.Commit();
-                            return (SQLiteResultCode.Success, null);
+                            return (true, null);
                         }
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return (SQLiteResultCode.Error, ex.Message);
+                            return (false, ex.Message);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                return (SQLiteResultCode.Error, ex.Message);
+                return (false, ex.Message);
             }
         }
     }
